@@ -96,10 +96,12 @@
 </footer>
 
 <script>
-// Close profile panel after save
+// Close profile panel after save → auto-refresh all
 document.body.addEventListener('htmx:afterSwap', (e) => {
   if (e.detail.target.id === 'briefing-body') {
     document.getElementById('profile-panel').classList.remove('open');
+    // Auto-pull all modules after profile save
+    setTimeout(refreshAll, 300);
   }
 });
 
