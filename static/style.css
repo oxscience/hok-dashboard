@@ -68,10 +68,10 @@ body {
   background: rgba(99,102,241,0.1);
 }
 
-.toc-settings {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
+.toc-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 10px;
 }
 
 /* ── Briefing Container ─────────────────────────────────── */
@@ -106,15 +106,49 @@ body {
 }
 .briefing-date strong { color: var(--text-secondary); }
 
-.btn-settings {
-  position: absolute;
-  top: 0;
-  right: 0;
+.briefing-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn-refresh-all {
   background: none;
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 6px 12px;
+  padding: 7px 16px;
   font-size: 13px;
+  font-family: var(--font);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-refresh-all:hover:not(:disabled) {
+  border-color: var(--indigo-dim);
+  color: var(--indigo);
+}
+.btn-refresh-all:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.refresh-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--indigo);
+}
+
+.btn-settings {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-family: var(--font);
   color: var(--text-muted);
   cursor: pointer;
 }

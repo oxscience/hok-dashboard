@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Head of Knowledge — Briefing</title>
+  <title>OX Briefing</title>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -16,6 +16,10 @@
     {{ module.icon }} {{ module.name }}
   </a>
   {% endfor %}
+  <div class="toc-divider"></div>
+  <a href="#" class="toc-link" onclick="event.preventDefault(); refreshAll()">
+    ↻ Alles abrufen
+  </a>
   <a href="#" class="toc-link toc-settings" onclick="event.preventDefault(); document.getElementById('profile-panel').classList.toggle('open')">
     ⚙️ Profil
   </a>
@@ -26,11 +30,20 @@
   <!-- Briefing Header -->
   <header class="briefing-header">
     <div class="briefing-logo">🧠</div>
-    <h1>Head of Knowledge</h1>
+    <h1>OX Briefing</h1>
     <p class="briefing-date">
-      Briefing{% if profile and profile.fachgebiet %} für <strong>{{ profile.fachgebiet }}</strong>{% endif %}
-      · {{ now.strftime('%d. %B %Y') }}
+      {% if profile and profile.fachgebiet %}Briefing für <strong>{{ profile.fachgebiet }}</strong> · {% endif %}{{ now.strftime('%d. %B %Y') }}
     </p>
+    <div class="briefing-actions">
+      <button class="btn-refresh-all" onclick="refreshAll()" id="btn-refresh-all"
+              {% if not profile or not profile.fachgebiet %}disabled{% endif %}>
+        <span class="btn-label">↻ Alles abrufen</span>
+        <span class="refresh-spinner" id="refresh-spinner" style="display:none"><span class="spinner"></span> lädt…</span>
+      </button>
+      <button class="btn-settings" onclick="document.getElementById('profile-panel').classList.toggle('open')">
+        ⚙️ Profil
+      </button>
+    </div>
   </header>
 
   <!-- Profile Panel -->
@@ -79,7 +92,7 @@
 </main>
 
 <footer class="briefing-footer">
-  Head of Knowledge · Out Of The Box Science
+  OX Briefing · Out Of The Box Science
 </footer>
 
 <script>
@@ -90,17 +103,12 @@ document.body.addEventListener('htmx:afterSwap', (e) => {
   }
 });
 
-// Scroll Spy — highlight active section in sidebar
+// Scroll Spy
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     const id = entry.target.id;
-    const links = document.querySelectorAll(`[data-section="${id}"]`);
-    links.forEach(link => {
-      if (entry.isIntersecting) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
+    document.querySelectorAll(`[data-section="${id}"]`).forEach(link => {
+      link.classList.toggle('active', entry.isIntersecting);
     });
   });
 }, { rootMargin: '-20% 0px -60% 0px' });
@@ -108,13 +116,49 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll('.section').forEach(s => observer.observe(s));
 
 // Smooth scroll on TOC click
-document.querySelectorAll('.toc-link').forEach(link => {
+document.querySelectorAll('.toc-link[data-section]').forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
     const target = document.getElementById(link.dataset.section);
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
+
+// Refresh All — pull all modules sequentially
+async function refreshAll() {
+  const btn = document.getElementById('btn-refresh-all');
+  const label = btn.querySelector('.btn-label');
+  const spinner = document.getElementById('refresh-spinner');
+  const moduleIds = [{{ modules | map(attribute='id') | join(', ') }}];
+
+  btn.disabled = true;
+  label.style.display = 'none';
+  spinner.style.display = 'inline-flex';
+
+  let done = 0;
+  for (const id of moduleIds) {
+    try {
+      const resp = await fetch('/pull/' + id);
+      const html = await resp.text();
+      const el = document.getElementById('section-' + id);
+      if (el) el.outerHTML = html;
+      done++;
+      spinner.innerHTML = `<span class="spinner"></span> ${done}/${moduleIds.length}`;
+    } catch (e) {
+      console.error('Pull failed for module', id, e);
+    }
+  }
+
+  // Re-observe sections for scroll spy
+  document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+  label.textContent = '✓ Fertig!';
+  label.style.display = 'inline';
+  spinner.style.display = 'none';
+  btn.disabled = false;
+
+  setTimeout(() => { label.textContent = '↻ Alles abrufen'; }, 2000);
+}
 </script>
 
 </body>
