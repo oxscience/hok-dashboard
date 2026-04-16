@@ -1,0 +1,80 @@
+{#
+  Module Card — inline briefing.
+  Alle 5 Module sind live. States: loaded | empty | error.
+#}
+{% set has_data = module.latest and (module.latest.studies or module.latest.tools or module.latest.entries) %}
+
+<article class="card card-{{ module.accent }}"
+         id="card-{{ module.id }}"
+         {% if module.layout == 'hero' %}data-layout="hero"{% endif %}>
+
+  <header class="card-head">
+    <div class="card-head-left">
+      <span class="card-icon">{{ module.icon }}</span>
+      <div>
+        <h3 class="card-title">{{ module.name }}</h3>
+        <div class="card-subtitle">
+          <span class="card-category">{{ module.category }}</span>
+          <span class="dot">·</span>
+          <span class="card-cadence">{{ module.cadence }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-head-right">
+      {% if has_data %}
+      <button class="icon-btn"
+              hx-get="/pull/{{ module.id }}"
+              hx-target="#card-{{ module.id }}"
+              hx-swap="outerHTML"
+              hx-indicator="#spinner-{{ module.id }}"
+              title="Aktualisieren"
+              {% if not profile or not profile.fachgebiet %}disabled{% endif %}>
+        <span class="icon-refresh">↻</span>
+        <span class="htmx-indicator" id="spinner-{{ module.id }}"><span class="spinner"></span></span>
+      </button>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="card-body">
+    {% if module.error %}
+      <div class="card-state card-state-error">
+        <p>{{ module.error }}</p>
+        <button class="btn btn-sm"
+                hx-get="/pull/{{ module.id }}"
+                hx-target="#card-{{ module.id }}"
+                hx-swap="outerHTML">
+          Erneut versuchen
+        </button>
+      </div>
+
+    {% elif has_data %}
+      {% if module.data_type == 'tools' %}
+        {% include "partials/card_preview_tools.html" %}
+      {% elif module.data_type == 'feed' %}
+        {% include "partials/card_preview_feed.html" %}
+      {% else %}
+        {% include "partials/card_preview_studies.html" %}
+      {% endif %}
+
+    {% else %}
+      <div class="card-state card-state-empty">
+        <p class="card-desc">{{ module.description }}</p>
+        <div class="card-sources">
+          {% for src in module.data_sources %}<span class="source-tag">{{ src }}</span>{% endfor %}
+        </div>
+        <button class="btn btn-accent btn-pull"
+                hx-get="/pull/{{ module.id }}"
+                hx-target="#card-{{ module.id }}"
+                hx-swap="outerHTML"
+                hx-indicator="#spinner-{{ module.id }}"
+                {% if not profile or not profile.fachgebiet %}disabled title="Erst Profil ausfüllen"{% endif %}>
+          <span class="btn-label">⚡ Jetzt abrufen</span>
+          <span class="htmx-indicator" id="spinner-{{ module.id }}">
+            <span class="spinner"></span> lade…
+          </span>
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</article>

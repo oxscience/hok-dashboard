@@ -1,0 +1,114 @@
+{#
+  Briefing Section — one module rendered as a feed section.
+  Data types: studies, tools, feed.
+#}
+{% set data = module.latest %}
+{% set has_data = data and (data.studies or data.tools or data.entries) %}
+
+<section class="section section-{{ module.accent }}" id="section-{{ module.id }}">
+
+  <div class="section-head">
+    <h2>
+      <span class="section-icon">{{ module.icon }}</span>
+      {{ module.name }}
+      {% if has_data and data.meta %}
+        <span class="section-count">({{ data.meta.returned }})</span>
+      {% endif %}
+    </h2>
+    <div class="section-actions">
+      {% if has_data and data._timeago %}
+      <span class="section-time">{{ data._timeago }}</span>
+      {% endif %}
+      <button class="btn-refresh"
+              hx-get="/pull/{{ module.id }}"
+              hx-target="#section-{{ module.id }}"
+              hx-swap="outerHTML"
+              hx-indicator="#spin-{{ module.id }}"
+              {% if not profile or not profile.fachgebiet %}disabled{% endif %}
+              title="Aktualisieren">
+        <span class="icon-refresh">↻</span>
+        <span class="htmx-indicator" id="spin-{{ module.id }}"><span class="spinner"></span></span>
+      </button>
+    </div>
+  </div>
+
+  {% if module.error %}
+
+    <p class="section-error">{{ module.error }}</p>
+
+  {% elif has_data %}
+
+    {# ── Studies (Module 1, 2) ─────────────── #}
+    {% if module.data_type == 'studies' %}
+    <ol class="item-list">
+      {% for s in data.studies[:5] %}
+      <li class="item">
+        <div class="item-head">
+          <span class="tag tag-{{ s.best_type | replace(' ', '') | lower }}">{{ s.best_type }}</span>
+          <span class="item-metrics">
+            {% if s.fwci and s.fwci > 0 %}⚡{{ "%.0f" | format(s.fwci) }}{% endif %}
+            {% if s.cited_by_count %}📊{{ s.cited_by_count }}{% endif %}
+            {% if s.is_oa %}🔓{% endif %}
+          </span>
+        </div>
+        <a href="{{ s.pubmed_url }}" target="_blank" rel="noopener" class="item-title">{{ s.title }}</a>
+        <p class="item-meta">{{ s.journal }} · {{ s.pubdate }}</p>
+        {% if s.tldr %}
+        <p class="item-tldr">→ {{ s.tldr }}</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    {% if data.studies | length > 5 %}
+    <a href="/view/{{ module.id }}" class="section-more">+ {{ data.studies | length - 5 }} weitere →</a>
+    {% endif %}
+
+    {# ── Tools (Module 5) ──────────────────── #}
+    {% elif module.data_type == 'tools' %}
+    <ol class="item-list">
+      {% for t in data.tools[:5] %}
+      <li class="item item-compact">
+        <a href="{{ t.tool_url }}" target="_blank" rel="noopener" class="item-title">{{ t.title }}</a>
+        <span class="item-metrics-inline">🔥{{ t.points }} {% if t.comments %}💬{{ t.comments }}{% endif %}</span>
+        <p class="item-meta">{{ t.domain or 'news.ycombinator.com' }} · {{ t.timeago }}</p>
+      </li>
+      {% endfor %}
+    </ol>
+    {% if data.tools | length > 5 %}
+    <a href="/view/{{ module.id }}" class="section-more">+ {{ data.tools | length - 5 }} weitere →</a>
+    {% endif %}
+
+    {# ── Feed (Module 6, 9) ────────────────── #}
+    {% elif module.data_type == 'feed' %}
+    <ol class="item-list">
+      {% for e in data.entries[:5] %}
+      <li class="item item-compact">
+        <a href="{{ e.url }}" target="_blank" rel="noopener" class="item-title">{{ e.title }}</a>
+        <p class="item-meta">{{ e.feed_label or e.source }} · {{ e.timeago }}</p>
+        {% if e.summary %}
+        <p class="item-summary">{{ e.summary[:200] }}{% if e.summary | length > 200 %}…{% endif %}</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    {% if data.entries | length > 5 %}
+    <a href="/view/{{ module.id }}" class="section-more">+ {{ data.entries | length - 5 }} weitere →</a>
+    {% endif %}
+
+    {% endif %}
+
+  {% else %}
+    <p class="section-empty">
+      {{ module.description }}
+      <button class="btn-pull-inline"
+              hx-get="/pull/{{ module.id }}"
+              hx-target="#section-{{ module.id }}"
+              hx-swap="outerHTML"
+              hx-indicator="#spin-{{ module.id }}"
+              {% if not profile or not profile.fachgebiet %}disabled{% endif %}>
+        ⚡ Abrufen
+      </button>
+    </p>
+  {% endif %}
+
+</section>

@@ -1,0 +1,44 @@
+{#
+  Feed-Preview für RSS-basierte Module (Leitlinien, Patienten, Datenschutz).
+  Erwartet module.latest.entries.
+#}
+{% set entries = module.latest.entries %}
+{% set meta = module.latest.meta %}
+
+<div class="card-summary">
+  <span class="summary-count">{{ meta.returned }}</span>
+  <span class="summary-label">Meldungen</span>
+  {% if meta.days %}
+  <span class="dot">·</span>
+  <span class="summary-days">{{ meta.days }} Tage</span>
+  {% endif %}
+</div>
+
+<ul class="card-list">
+  {% for entry in entries[:3] %}
+  <li class="card-list-item feed-item">
+    <div class="feed-item-top">
+      <a href="{{ entry.url }}" target="_blank" rel="noopener" class="feed-title">{{ entry.title }}</a>
+    </div>
+    <p class="item-meta">
+      <span class="feed-source">{{ entry.feed_label or entry.source }}</span>
+      <span class="dot">·</span>
+      <span>{{ entry.timeago }}</span>
+    </p>
+    {% if entry.summary %}
+    <p class="feed-summary">{{ entry.summary[:150] }}{% if entry.summary | length > 150 %}…{% endif %}</p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+
+<footer class="card-foot">
+  <a href="/view/{{ module.id }}" class="card-link">
+    {% if entries | length > 3 %}
+    + {{ entries | length - 3 }} weitere →
+    {% else %}
+    Alle ansehen →
+    {% endif %}
+  </a>
+  <span class="card-time">{{ module.latest._timeago }}</span>
+</footer>

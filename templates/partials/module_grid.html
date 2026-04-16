@@ -1,0 +1,22 @@
+{# Hero module (Studien-Update) at full width, rest in 2-column grid #}
+{% set hero = modules | selectattr('layout', 'equalto', 'hero') | first %}
+{% set rest = modules | rejectattr('layout', 'equalto', 'hero') | list %}
+
+{% if hero %}
+<div class="grid-hero">
+  {% set module = hero %}
+  {% include "partials/module_card.html" %}
+</div>
+{% endif %}
+
+<div class="grid-secondary">
+  {% for module in rest %}
+    {% include "partials/module_card.html" %}
+  {% endfor %}
+</div>
+
+{% if not profile or not profile.fachgebiet %}
+<div class="onboarding-hint">
+  <p>👆 Erst dein <strong>Profil</strong> ausfüllen, damit das Dashboard deine Daten pullen kann.</p>
+</div>
+{% endif %}

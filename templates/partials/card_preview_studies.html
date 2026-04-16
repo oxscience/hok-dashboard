@@ -1,0 +1,48 @@
+{#
+  Studies-Preview für Module mit data_type = "studies".
+  Erwartet module.latest.studies.
+#}
+{% set studies_list = module.latest.studies %}
+{% set meta = module.latest.meta %}
+
+<div class="card-summary">
+  <span class="summary-count">{{ meta.returned }}</span>
+  <span class="summary-label">Treffer</span>
+  <span class="dot">·</span>
+  <span class="summary-query">"{{ meta.query_used }}"</span>
+  <span class="dot">·</span>
+  <span class="summary-days">{{ meta.days }} Tage</span>
+</div>
+
+<ol class="card-list">
+  {% for study in studies_list[:2] %}
+  <li class="card-list-item">
+    <div class="item-top">
+      <span class="type-tag type-{{ study.best_type | replace(' ', '-') | replace('-', '') | lower }}">
+        {{ study.best_type }}
+      </span>
+      <span class="item-metrics">
+        {% if study.fwci and study.fwci > 0 %}<span title="Field-Weighted Citation Impact">⚡{{ "%.1f" | format(study.fwci) }}</span>{% endif %}
+        {% if study.cited_by_count %}<span title="Citations">📊{{ study.cited_by_count }}</span>{% endif %}
+        {% if study.is_oa %}<span title="Open Access">🔓</span>{% endif %}
+      </span>
+    </div>
+    <h4 class="item-title">{{ study.title }}</h4>
+    <p class="item-meta"><em>{{ study.journal }}</em> · {{ study.pubdate }}</p>
+    {% if study.tldr %}
+    <p class="item-tldr">{{ study.tldr }}</p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+
+<footer class="card-foot">
+  <a href="/view/{{ module.id }}" class="card-link">
+    {% if studies_list | length > 2 %}
+    + {{ studies_list | length - 2 }} weitere · Alle anzeigen →
+    {% else %}
+    Details ansehen →
+    {% endif %}
+  </a>
+  <span class="card-time">{{ module.latest._timeago }}</span>
+</footer>

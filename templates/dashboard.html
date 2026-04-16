@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Head of Knowledge — Briefing</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- Floating TOC (right margin, Notion-style) -->
+<nav class="toc" id="toc">
+  {% for module in modules %}
+  <a href="#section-{{ module.id }}" class="toc-link" data-section="section-{{ module.id }}">
+    {{ module.icon }} {{ module.name }}
+  </a>
+  {% endfor %}
+  <a href="#" class="toc-link toc-settings" onclick="event.preventDefault(); document.getElementById('profile-panel').classList.toggle('open')">
+    ⚙️ Profil
+  </a>
+</nav>
+
+<main class="briefing">
+
+  <!-- Briefing Header -->
+  <header class="briefing-header">
+    <div class="briefing-logo">🧠</div>
+    <h1>Head of Knowledge</h1>
+    <p class="briefing-date">
+      Briefing{% if profile and profile.fachgebiet %} für <strong>{{ profile.fachgebiet }}</strong>{% endif %}
+      · {{ now.strftime('%d. %B %Y') }}
+    </p>
+  </header>
+
+  <!-- Profile Panel -->
+  <div id="profile-panel" class="profile-panel {% if not profile or not profile.fachgebiet %}open{% endif %}">
+    <div class="profile-panel-inner">
+      <div class="profile-top">
+        <h2>Dein Profil</h2>
+        <button class="btn-close" onclick="document.getElementById('profile-panel').classList.remove('open')">&times;</button>
+      </div>
+      <p class="profile-hint">Wird in allen Modulen verwendet.</p>
+      <form hx-post="/profile" hx-target="#briefing-body" hx-swap="innerHTML" class="profile-form">
+        <label>
+          <span class="label-text">Fachgebiet</span>
+          <input type="text" name="fachgebiet" value="{{ profile.fachgebiet if profile else '' }}"
+                 placeholder="z.B. Physiotherapie, Orthopädie">
+        </label>
+        <label>
+          <span class="label-text">Praxistyp</span>
+          <input type="text" name="praxistyp" value="{{ profile.praxistyp if profile else '' }}"
+                 placeholder="z.B. Physiotherapie-Praxis">
+        </label>
+        <label>
+          <span class="label-text">Teamgröße</span>
+          <input type="text" name="teamgroesse" value="{{ profile.teamgroesse if profile else '' }}"
+                 placeholder="z.B. 5, 12, 25">
+        </label>
+        <label>
+          <span class="label-text">Standard-Zeitraum</span>
+          <select name="zeitraum">
+            <option value="7 Tage" {% if profile and profile.zeitraum == '7 Tage' %}selected{% endif %}>7 Tage</option>
+            <option value="14 Tage" {% if profile and profile.zeitraum == '14 Tage' %}selected{% endif %}>14 Tage</option>
+            <option value="30 Tage" {% if not profile or profile.zeitraum == '30 Tage' %}selected{% endif %}>30 Tage</option>
+            <option value="90 Tage" {% if profile and profile.zeitraum == '90 Tage' %}selected{% endif %}>90 Tage (Quartal)</option>
+          </select>
+        </label>
+        <button type="submit" class="btn-save">Speichern</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Briefing Body -->
+  <div id="briefing-body">
+    {% include "partials/briefing_body.html" %}
+  </div>
+
+</main>
+
+<footer class="briefing-footer">
+  Head of Knowledge · Out Of The Box Science
+</footer>
+
+<script>
+// Close profile panel after save
+document.body.addEventListener('htmx:afterSwap', (e) => {
+  if (e.detail.target.id === 'briefing-body') {
+    document.getElementById('profile-panel').classList.remove('open');
+  }
+});
+
+// Scroll Spy — highlight active section in sidebar
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const id = entry.target.id;
+    const links = document.querySelectorAll(`[data-section="${id}"]`);
+    links.forEach(link => {
+      if (entry.isIntersecting) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+// Smooth scroll on TOC click
+document.querySelectorAll('.toc-link').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.getElementById(link.dataset.section);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>

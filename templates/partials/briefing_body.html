@@ -1,0 +1,11 @@
+{# The full briefing — all modules as sequential sections #}
+
+{% if not profile or not profile.fachgebiet %}
+<div class="onboarding">
+  <p>👆 Erst dein <strong>Profil</strong> ausfüllen, damit das Briefing deine Daten pullen kann.</p>
+</div>
+{% endif %}
+
+{% for module in modules %}
+  {% include "partials/briefing_section.html" %}
+{% endfor %}

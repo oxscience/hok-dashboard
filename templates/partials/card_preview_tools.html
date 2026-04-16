@@ -1,0 +1,40 @@
+{#
+  Tool-Preview für Module mit data_type = "tools".
+  Erwartet module.latest.items (nicht .studies).
+#}
+{% set tools_list = module.latest.tools %}
+{% set meta = module.latest.meta %}
+
+<div class="card-summary">
+  <span class="summary-count">{{ meta.returned }}</span>
+  <span class="summary-label">Tools</span>
+  <span class="dot">·</span>
+  <span class="summary-query">Show HN · {{ meta.days }} Tage</span>
+</div>
+
+<ol class="card-list">
+  {% for tool in tools_list[:2] %}
+  <li class="card-list-item">
+    <div class="item-top">
+      <span class="type-tag type-tool">{{ tool.source }}</span>
+      <span class="item-metrics">
+        <span title="Upvotes">🔥{{ tool.points }}</span>
+        {% if tool.comments %}<span title="Kommentare">💬{{ tool.comments }}</span>{% endif %}
+      </span>
+    </div>
+    <h4 class="item-title">{{ tool.title }}</h4>
+    <p class="item-meta"><em>{{ tool.domain or 'news.ycombinator.com' }}</em> · {{ tool.timeago }}</p>
+  </li>
+  {% endfor %}
+</ol>
+
+<footer class="card-foot">
+  <a href="/view/{{ module.id }}" class="card-link">
+    {% if tools_list | length > 2 %}
+    + {{ tools_list | length - 2 }} weitere · Alle anzeigen →
+    {% else %}
+    Details ansehen →
+    {% endif %}
+  </a>
+  <span class="card-time">{{ module.latest._timeago }}</span>
+</footer>

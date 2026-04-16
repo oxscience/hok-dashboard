@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ module.name }} · Head of Knowledge</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <a href="/" class="back-link">← Dashboard</a>
+      <span class="header-icon">{{ module.icon }}</span>
+      <div>
+        <h1 class="header-title">{{ module.name }}</h1>
+        <p class="header-subtitle">{{ module.category }} · {{ module.cadence }}</p>
+      </div>
+    </div>
+    <div class="header-right">
+      {% if profile and profile.fachgebiet %}
+      <div class="header-profile">
+        <span class="profile-field">{{ profile.fachgebiet }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<main class="main main-detail">
+  {% set items = (result.studies or result.tools or result.entries) if result else [] %}
+  {% if items %}
+
+  <div class="detail-meta-bar">
+    <span class="meta-pill">{{ result.meta.returned }} von {{ result.meta.total_found }} Treffern</span>
+    <span class="meta-pill">🕒 {{ result.meta.days }} Tage</span>
+    {% if module.data_type != 'tools' %}
+    <span class="meta-pill">🔍 "{{ result.meta.query_used }}"</span>
+    {% endif %}
+    <span class="meta-pill">Aktualisiert {{ result._timeago }}</span>
+  </div>
+
+  {% if result.meta.sources_used %}
+  <div class="sources-bar">
+    Datenquellen:
+    {% for src in result.meta.sources_used %}<span class="source-badge">{{ src }}</span>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if module.data_type == 'feed' %}
+  <div class="detail-studies">
+    {% for entry in result.entries %}
+    <article class="study-card">
+      <h4 class="study-title"><a href="{{ entry.url }}" target="_blank" rel="noopener" style="color: var(--white); text-decoration: none;">{{ entry.title }}</a></h4>
+      <div class="study-meta">
+        <span class="study-authors">{{ entry.feed_label or entry.source }}</span>
+        <span class="study-sep">·</span>
+        <span class="study-date">{{ entry.published }} ({{ entry.timeago }})</span>
+      </div>
+      {% if entry.summary %}
+      <div class="study-abstract"><p>{{ entry.summary }}</p></div>
+      {% endif %}
+      <div class="study-actions">
+        <a href="{{ entry.url }}" target="_blank" rel="noopener" class="study-link">Artikel lesen →</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% elif module.data_type == 'tools' %}
+  <div class="detail-studies">
+    {% for tool in result.tools %}
+    <article class="study-card">
+      <div class="study-header">
+        <span class="study-type-badge type-tool">{{ tool.source }}</span>
+        <div class="study-metrics">
+          <span class="metric" title="Upvotes">🔥 {{ tool.points }}</span>
+          {% if tool.comments %}<span class="metric" title="Kommentare">💬 {{ tool.comments }}</span>{% endif %}
+        </div>
+      </div>
+      <h4 class="study-title">{{ tool.title }}</h4>
+      <div class="study-meta">
+        <span class="study-journal"><em>{{ tool.domain or 'news.ycombinator.com' }}</em></span>
+        <span class="study-sep">·</span>
+        <span class="study-date">{{ tool.timeago }}</span>
+        {% if tool.author %}
+        <span class="study-sep">·</span>
+        <span class="study-authors">@{{ tool.author }}</span>
+        {% endif %}
+      </div>
+      <div class="study-actions">
+        <a href="{{ tool.tool_url }}" target="_blank" rel="noopener" class="study-link study-link-oa">Tool besuchen →</a>
+        <a href="{{ tool.hn_url }}" target="_blank" rel="noopener" class="study-link">HN Thread →</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="detail-studies">
+  {% for study in result.studies %}
+  <article class="study-card">
+    <div class="study-header">
+      <span class="study-type-badge type-{{ study.best_type | replace(' ', '-') | replace('-', '') | lower }}">
+        {{ study.best_type }}
+      </span>
+      <div class="study-metrics">
+        {% if study.cited_by_count %}<span class="metric" title="Citations">📊 {{ study.cited_by_count }}</span>{% endif %}
+        {% if study.fwci and study.fwci > 0 %}<span class="metric" title="FWCI">⚡ {{ "%.1f" | format(study.fwci) }}</span>{% endif %}
+        {% if study.is_oa %}<span class="metric metric-oa" title="Open Access">🔓 {{ study.oa_status or 'open' }}</span>{% endif %}
+      </div>
+    </div>
+    <h4 class="study-title">{{ study.title }}</h4>
+    <div class="study-meta">
+      <span class="study-authors">{{ ", ".join(study.authors) }}</span>
+      <span class="study-sep">·</span>
+      <span class="study-journal"><em>{{ study.journal }}</em></span>
+      <span class="study-sep">·</span>
+      <span class="study-date">{{ study.pubdate }}</span>
+    </div>
+    {% if study.tldr %}
+    <div class="study-tldr">
+      <span class="tldr-label">TLDR</span>
+      <p>{{ study.tldr }}</p>
+    </div>
+    {% endif %}
+    {% if study.abstract and not study.tldr %}
+    <div class="study-abstract"><p>{{ study.abstract[:400] }}{% if study.abstract | length > 400 %}…{% endif %}</p></div>
+    {% endif %}
+    <div class="study-actions">
+      <a href="{{ study.pubmed_url }}" target="_blank" rel="noopener" class="study-link">PubMed →</a>
+      {% if study.doi_url %}<a href="{{ study.doi_url }}" target="_blank" rel="noopener" class="study-link">DOI →</a>{% endif %}
+      {% if study.oa_url and study.is_oa %}<a href="{{ study.oa_url }}" target="_blank" rel="noopener" class="study-link study-link-oa">Volltext →</a>{% endif %}
+    </div>
+  </article>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="detail-empty">
+    <p>Noch keine Daten für dieses Modul.</p>
+    <a href="/" class="btn btn-primary">Zurück zum Dashboard</a>
+  </div>
+  {% endif %}
+</main>
+
+</body>
+</html>
